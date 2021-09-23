@@ -12,5 +12,8 @@
   "devDependencies": {
     "electron": "^15.0.0",
     "electron-reloader": "^1.2.1"
+  },
+  "dependencies": {
+    "lcu-connector": "^2.1.3"
   }
 }
