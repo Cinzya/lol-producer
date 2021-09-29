@@ -39,13 +39,13 @@ connector.on('disconnect', () => {
 
 function getData() {
     console.log("Fetch Data...");
-    let basestring = `riot:SMizXFHgnXYK2RPSDmgx5A`;
+    let basestring = `${LCU.username}:${LCU.password}`;
     let buff = new Buffer(basestring);
     let base64string = buff.toString('base64');
     fetch(`https://${LCU.address}:${LCU.port}/lol-summoner/v1/status/`,{
         method: 'GET',
         headers: {
-            'Authorization': `Basic cmlvdDpTTWl6WEZIZ25YWUsyUlBTRG1neDVB`,
+            'Authorization': `Basic ${base64string}`,
             'Accept': 'application/json'
         }
     })
