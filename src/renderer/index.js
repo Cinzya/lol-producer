@@ -24,12 +24,23 @@
  *    }
  *  });
  * ```
- */
- import '../../css/icon.css';
+ */ 
+import '../../css/icon.css';
  import '../../css/materialize.min.css';
  import '../../js/materialize.min.js';
 
  import '../../js/connector.js';
+
+ window.addEventListener('DOMContentLoaded', () => {
+    const replaceText = (selector, text) => {
+      const element = document.getElementById(selector)
+      if (element) element.innerText = text
+    }
+  
+    for (const type of ['chrome', 'node', 'electron']) {
+      replaceText(`${type}-version`, process.versions[type])
+    }
+  })
 
  console.log('👋 This message is being logged by "renderer.js", included via webpack');
  
