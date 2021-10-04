@@ -11,7 +11,7 @@ dataBtn.onclick = getData;
 var LCU;
 
 // Start listening for the LCU client
-function connectLCU() {
+async function connectLCU() {
     console.log("Attempting Connection...");
     connector.start();
 }
@@ -21,7 +21,7 @@ function disconnectLCU() {
     connector.stop();
 }
 
-connector.on('connect', (data) => {
+connector.on('connect', async (data) => {
     console.log(data);
     LCU = data;
     //  {
@@ -31,18 +31,24 @@ connector.on('connect', (data) => {
     //    password: H9y4kOYVkmjWu_5mVIg1qQ,
     //    protocol: 'https'
     //  }
+
+        console.log("Hi");
+        let LCUstatus = await LCUrequest("/lol-summoner/v1/status/");
+        // if (LCUstatus.ready == true) {
+        // }
+        console.log("Hallo");
 });
 
 connector.on('disconnect', () => {
     console.log("Disconnected");
 })
 
-function getData() {
+async function LCUrequest(endpoint) {
     console.log("Fetch Data...");
     let basestring = `${LCU.username}:${LCU.password}`;
     let buff = new Buffer(basestring);
     let base64string = buff.toString('base64');
-    fetch(`https://${LCU.address}:${LCU.port}/lol-summoner/v1/status/`,{
+    await fetch(`${LCU.protocol}://${LCU.address}:${LCU.port}${endpoint}`,{
         method: 'GET',
         headers: {
             'Authorization': `Basic ${base64string}`,
@@ -50,8 +56,15 @@ function getData() {
         }
     })
     .then(response => response.json())
-    .then(data => console.log(data))
+    .then(data => {
+        console.log(data)
+        return data;
+    })
     .catch((error) => {
         console.error('Error:', error);
       });
+}
+
+function getData() {
+    LCUrequest("/lol-summoner/v1/status/");
 }
