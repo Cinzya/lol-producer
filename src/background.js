@@ -20,6 +20,8 @@ async function createWindow() {
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
+      // disable CORS
+      webSecurity: false
     },
   });
 
@@ -62,6 +64,13 @@ app.on("ready", async () => {
     }
   }
   createWindow();
+});
+
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  // On certificate error we disable default behaviour (stop loading the page)
+  // and we then say "it is all fine - true" to the callback
+  event.preventDefault();
+  callback(true);
 });
 
 // Exit cleanly on request from parent process in development mode.

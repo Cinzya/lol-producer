@@ -1,9 +1,9 @@
 <template>
   <v-app>
-    <v-app-bar app color="red" dark>
+    <v-app-bar app :color="connection ? 'green' : 'red'" dark>
       <div class="d-flex align-center">
 
-      <v-avatar color="red" class="mx-2" size="36">
+      <v-avatar color="grey" class="mx-2" size="36">
         <v-icon dark>
           mdi-account-circle
         </v-icon>
@@ -32,23 +32,24 @@
 </template>
 
 <script>
+import mixin from './mixin';
+import { mapState } from 'vuex';
+
 export default {
   name: "App",
-
+  mixins: [mixin],
   data: () => ({
     connection: false
   }),
-
   methods: {
     async login() {
       await this.$store.dispatch('connectLCU');
       await console.log(this.$store.state.LCU);
+      this.data.connection = await this.requestLCU('/lol-summoner/v1/status/');
     }
   },
   computed: {
-    LCU() {
-      return this.$store.state.LCU;
-    }
+    ...mapState(['LCU'])
   }
 };
 </script>

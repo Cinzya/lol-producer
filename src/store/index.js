@@ -14,7 +14,6 @@ export default new Vuex.Store({
     async getLogins(state) {
       await connector.on('connect', (data) => {
         state.LCU = data;
-        console.log("Connector");
         //  {
         //    address: '127.0.0.1'
         //    port: 18633,
@@ -25,7 +24,7 @@ export default new Vuex.Store({
     });
     // Start listening for the LCU client
     connector.start();
-        }
+    }
   },
   actions: {
     async connectLCU({ commit }) {
