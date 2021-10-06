@@ -1,18 +1,17 @@
 import Vue from "vue";
 import Vuex from "vuex";
-import LCUConnector from 'lcu-connector';
+import LCUConnector from "lcu-connector";
 const connector = new LCUConnector();
-
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    LCU: {}
+    LCU: {},
   },
   mutations: {
     async getLogins(state) {
-      await connector.on('connect', (data) => {
+      await connector.on("connect", (data) => {
         state.LCU = data;
         //  {
         //    address: '127.0.0.1'
@@ -21,15 +20,15 @@ export default new Vuex.Store({
         //    password: H9y4kOYVkmjWu_5mVIg1qQ,
         //    protocol: 'https'
         //  }
-    });
-    // Start listening for the LCU client
-    connector.start();
-    }
+      });
+      // Start listening for the LCU client
+      connector.start();
+    },
   },
   actions: {
     async connectLCU({ commit }) {
-      await commit('getLogins');
-    }
+      await commit("getLogins");
+    },
   },
   modules: {},
 });
