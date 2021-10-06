@@ -1,16 +1,16 @@
 <template>
   <v-app>
-    <v-app-bar app v-bind:color="connection.ready ? 'green' : 'red'" dark>
-      <div class="d-flex align-center">
+    <v-app-bar app :color="color" dark>
+      <div class="dv-bind-flex align-center">
 
-      <v-avatar color="grey" class="mx-2" size="36">
+      <v-avatar :color="color + ' darken-2'" class="mx-2" size="38">
         <img v-if="connection.ready" :src="avatar" :alt="summoner">
 
         <v-icon v-else dark>
           mdi-account-circle
         </v-icon>
       </v-avatar>
-      <span class="mr-2">{{ summoner }}</span>
+      <span class="ml-2">{{ summoner }}</span>
 
       </div>
 
@@ -54,11 +54,8 @@ export default {
   computed: {
     ...mapState(['LCU']),
     summoner() {
-      if (this.summonerData.displayName) {
-        return this.summonerData.displayName;
-      } else {
-        return "Offline";
-      }
+      if (this.summonerData.displayName) return this.summonerData.displayName;
+      else return "Offline";
     },
     avatar() {
       if (this.summonerData.profileIconId) {
@@ -66,6 +63,10 @@ export default {
       } else {
         return "";
       }
+    },
+    color() {
+      if (this.connection.ready) return "green";
+      else return "red";
     }
   }
 };
