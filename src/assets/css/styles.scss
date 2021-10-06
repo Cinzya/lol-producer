@@ -1,0 +1,18 @@
+#main {
+  margin-bottom: 56px;
+}
+
+#footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+#alert {
+  position: fixed;
+  top: 70px;
+  left: 1%;
+  width: 98%;
+  z-index: 1;
+}

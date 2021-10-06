@@ -16,15 +16,36 @@
       </v-btn>
     </v-app-bar>
 
-    <v-main>
+    <v-main id="main">
       <router-view />
     </v-main>
+
+    <v-bottom-navigation id="footer">
+      <v-btn>
+        <span>Recent</span>
+
+        <v-icon>mdi-history</v-icon>
+      </v-btn>
+
+      <v-btn>
+        <span>Favorites</span>
+
+        <v-icon>mdi-heart</v-icon>
+      </v-btn>
+
+      <v-btn>
+        <span>Nearby</span>
+
+        <v-icon>mdi-map-marker</v-icon>
+      </v-btn>
+    </v-bottom-navigation>
   </v-app>
 </template>
 
 <script>
 import mixin from "./mixin";
 import { mapState } from "vuex";
+import "./assets/css/styles.scss";
 
 export default {
   name: "App",
