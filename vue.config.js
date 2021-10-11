@@ -5,7 +5,8 @@ module.exports = {
       nodeIntegration: true,
       contextIsolation: false,
       allowRunningInsecureContent: true,
-      webSecurity: false
-    }
-  }
+      webSecurity: false,
+      preload: "src/preload.js",
+    },
+  },
 };
