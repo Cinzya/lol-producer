@@ -10,7 +10,6 @@
       </div>
 
       <v-spacer></v-spacer>
-
       <v-btn icon>
         <v-icon @click="login()"> mdi-power </v-icon>
       </v-btn>
@@ -46,31 +45,30 @@
 import mixin from "./mixin";
 import { mapState } from "vuex";
 import "./assets/css/styles.scss";
+const { ipcRenderer } = require("electron");
 
 export default {
   name: "App",
   mixins: [mixin],
   data: () => ({
-    connection: {},
+    connection: false,
     summonerData: {},
+    loading: false,
   }),
   methods: {
     async login() {
-      await this.$store.dispatch("connectLCU");
-      this.connection = await this.requestLCU("/lol-summoner/v1/status/");
-      this.summonerData = await this.requestLCU(
-        "/lol-summoner/v1/current-summoner"
-      );
+      ipcRenderer.send("CONNECT_LCU");
     },
   },
   computed: {
     ...mapState(["LCU"]),
     summoner() {
-      if (this.summonerData.displayName) return this.summonerData.displayName;
+      if (this.summonerData.displayName && this.connection.ready)
+        return this.summonerData.displayName;
       else return "Offline";
     },
     avatar() {
-      if (this.summonerData.profileIconId) {
+      if (this.summonerData.profileIconId && this.connection.ready) {
         return `https://ddragon.canisback.com/10.1.1/img/profileicon/${this.summonerData.profileIconId}.png`;
       } else {
         return "";
@@ -80,6 +78,16 @@ export default {
       if (this.connection.ready) return "green";
       else return "red";
     },
+  },
+  created() {
+    ipcRenderer.on("LCU_STATUS", (event, arg) => {
+      this.connection = arg;
+    });
+    ipcRenderer.on("LCU_SUMMONER", (event, arg) => {
+      this.summonerData = arg;
+    });
+
+    ipcRenderer.send("CONNECT_LCU");
   },
 };
 </script>

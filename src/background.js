@@ -1,9 +1,12 @@
 "use strict";
 
-import { app, protocol, BrowserWindow } from "electron";
+import { app, protocol, BrowserWindow, ipcMain } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 const isDevelopment = process.env.NODE_ENV !== "production";
+// const path = require("path");
+import LCUConnector from "lcu-connector";
+const connector = new LCUConnector();
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -15,13 +18,19 @@ async function createWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    title: "LoL Producer",
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       contextIsolation: !process.env.ELECTRON_NODE_INTEGRATION,
+      enableRemoteModule: true,
       // disable CORS
-      webSecurity: false
+      webSecurity: false,
+      allowDisplayingInsecureContent: true,
+      allowRunningInsecureContent: true,
+      // __static is set by webpack and will point to the public directory
+      // preload: path.resolve(__static, "preload.js"),
     },
   });
 
@@ -34,6 +43,17 @@ async function createWindow() {
     // Load the index.html when not in development
     win.loadURL("app://./index.html");
   }
+
+  // Disable SSL for specific hosts
+  win.webContents.session.setCertificateVerifyProc((request, callback) => {
+    const { hostname } = request;
+    if (hostname === "127.0.0.1" || "ddragon.canisback.com") {
+      callback(0);
+      process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+    } else {
+      callback(-2);
+    }
+  });
 }
 
 // Quit when all windows are closed.
@@ -51,10 +71,27 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
+var LCU;
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on("ready", async () => {
+  // Grab LCU credentials
+  connector.on("connect", (data) => {
+    //  {
+    //    address: '127.0.0.1'
+    //    port: 18633,
+    //    username: 'riot',
+    //    password: H9y4kOYVkmjWu_5mVIg1qQ,
+    //    protocol: 'https'
+    //  }
+    console.log("Connect with LCU...");
+    LCU = data;
+    console.log(LCU);
+  });
+  // Start listening for the LCU client
+  connector.start();
+
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
     try {
@@ -66,12 +103,16 @@ app.on("ready", async () => {
   createWindow();
 });
 
-app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-  // On certificate error we disable default behaviour (stop loading the page)
-  // and we then say "it is all fine - true" to the callback
-  event.preventDefault();
-  callback(true);
-});
+// SSL/TSL: this is the self signed certificate support
+// app.on(
+//   "certificate-error",
+//   (event, webContents, url, error, certificate, callback) => {
+//     // On certificate error we disable default behaviour (stop loading the page)
+//     // and we then say "it is all fine - true" to the callback
+//     event.preventDefault();
+//     callback(true);
+//   }
+// );
 
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {
@@ -87,3 +128,48 @@ if (isDevelopment) {
     });
   }
 }
+
+// ipc Messages
+// const WebSocket = require("ws");
+const axios = require("axios");
+
+function token() {
+  return Buffer.from(`${LCU.username}:${LCU.password}`, "utf8").toString(
+    "base64"
+  );
+}
+
+let connection;
+let summoner;
+
+async function requestLCU(endpoint) {
+  console.log("Starting to fetch data");
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+
+  try {
+    let response = await axios.get(
+      `${LCU.protocol}://${LCU.address}:${LCU.port}${endpoint}`,
+      {
+        headers: {
+          Authorization: `Basic ${token()}`,
+        },
+      }
+    );
+    return await response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+ipcMain.on("CONNECT_LCU", (event) => {
+  if (typeof LCU != "undefined" || LCU != null) {
+    (async () => {
+      connection = await requestLCU("/lol-summoner/v1/status/");
+      summoner = await requestLCU("/lol-summoner/v1/current-summoner");
+      event.reply("LCU_STATUS", connection);
+      event.reply("LCU_SUMMONER", summoner);
+    })();
+  } else {
+    console.log("[error] Connection to LCU could not be established");
+  }
+});
