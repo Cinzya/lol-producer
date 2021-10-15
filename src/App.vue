@@ -55,7 +55,6 @@ export default {
   name: "App",
   mixins: [mixin],
   data: () => ({
-    connection: false,
     loading: false,
   }),
   methods: {
@@ -72,6 +71,14 @@ export default {
     this.$store.dispatch("setSummoner");
 
     ipcRenderer.send("CONNECT_LCU");
+
+    ipcRenderer.on("WEBSOCKET", (event, arg) => {
+      console.log(arg);
+    });
+
+    ipcRenderer.on("LCU_DISCONNECT", () => {
+      this.$store.dispatch("disconnectLCU");
+    });
   },
 };
 </script>

@@ -26,16 +26,23 @@ export default new Vuex.Store({
     setStatus({ commit }) {
       ipcRenderer.on("LCU_STATUS", (event, arg) => {
         commit("getStatus", arg);
+        if (arg.ready) ipcRenderer.send("WEBSOCKET", "connect");
+        else ipcRenderer.send("WEBSOCKET", "disconnect");
       });
+    },
+    disconnectLCU({ commit }) {
+      commit("getSummoner", {});
+      commit("getStatus", false);
     },
   },
   getters: {
     summoner: (state) => {
-      if (state.summoner.displayName) return state.summoner.displayName;
+      if (state.summoner.displayName && state.connection.ready)
+        return state.summoner.displayName;
       else return "Offline";
     },
     avatar: (state) => {
-      if (state.summoner.profileIconId) {
+      if (state.summoner.profileIconId && state.connection.ready) {
         return `https://ddragon.canisback.com/10.1.1/img/profileicon/${state.summoner.profileIconId}.png`;
       } else {
         return "";

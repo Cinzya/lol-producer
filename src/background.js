@@ -7,6 +7,8 @@ const isDevelopment = process.env.NODE_ENV !== "production";
 // const path = require("path");
 import LCUConnector from "lcu-connector";
 const connector = new LCUConnector();
+const axios = require("axios");
+const RiotWSProtocol = require("./../js/websocket");
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -131,16 +133,12 @@ if (isDevelopment) {
 
 // ipc Messages
 // const WebSocket = require("ws");
-const axios = require("axios");
 
 function token() {
   return Buffer.from(`${LCU.username}:${LCU.password}`, "utf8").toString(
     "base64"
   );
 }
-
-let connection;
-let summoner;
 
 async function requestLCU(endpoint) {
   console.log("Starting to fetch data");
@@ -161,15 +159,91 @@ async function requestLCU(endpoint) {
   }
 }
 
+async function requestLiveClient(endpoint) {
+  console.log("Starting to fetch data");
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+
+  try {
+    let response = await axios.get(`https://127.0.0.1:2999${endpoint}`);
+    return await response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function sendLiveClient(endpoint, data) {
+  console.log("Starting to send data");
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+
+  try {
+    let response = await axios.post(`https://127.0.0.1:2999${endpoint}`, data);
+    return await response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 ipcMain.on("CONNECT_LCU", (event) => {
   if (typeof LCU != "undefined" || LCU != null) {
     (async () => {
-      connection = await requestLCU("/lol-summoner/v1/status/");
-      summoner = await requestLCU("/lol-summoner/v1/current-summoner");
+      let connection = await requestLCU("/lol-summoner/v1/status/");
+      let summoner = await requestLCU("/lol-summoner/v1/current-summoner");
       event.reply("LCU_STATUS", connection);
       event.reply("LCU_SUMMONER", summoner);
     })();
   } else {
     console.log("[error] Connection to LCU could not be established");
+    event.reply("LCU_DISCONNECT");
   }
+});
+
+ipcMain.on("LCU_DISCONNECT", (event, arg) => {
+  connector.on("disconnect", (data) => {
+    console.log("LCU disconnected");
+    event.reply("LCU_DISCONNECT");
+  });
+});
+
+ipcMain.on("REPLAY_TIME", (event, arg) => {
+  let observing = arg;
+  if (observing) {
+    setInterval(async () => {
+      let timer = await requestLiveClient("/replay/playback");
+      event.reply("REPLAY_TIME", timer);
+    }, 100);
+  }
+});
+
+ipcMain.on("ADJUST_TIME", (event, arg) => {
+  sendLiveClient("/replay/playback", arg);
+});
+
+ipcMain.on("WEBSOCKET", (event, arg) => {
+  console.log("Hello from the Websocket");
+  const ws = new RiotWSProtocol(
+    `wss://${LCU.username}:${LCU.password}@${LCU.address}:${LCU.port}/`
+  );
+  ws.on("open", () => {
+    if (arg == "connect") {
+      console.log("Subscribe to WebSockets");
+      // Subscribe to all LCU events
+      ws.subscribe("OnJsonApiEvent", (rs) => {
+        // Get Lobby information
+        if (rs.uri == "/lol-lobby/v2/lobby") event.reply("WEBSOCKET", rs);
+
+        // Inform about Client Shutdown
+        if (
+          rs.uri == "/process-control/v1/process" &&
+          rs.data.status == "Stopping"
+        ) {
+          console.log("Terminate WebSocket");
+          event.reply("LCU_DISCONNECT");
+          ws.terminate();
+        }
+      });
+    } else if (arg == "disconnect") {
+      console.log("Close Websocket");
+      ws.close();
+    }
+  });
 });
