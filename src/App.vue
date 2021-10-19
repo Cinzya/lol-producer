@@ -70,7 +70,7 @@ export default {
   }),
   methods: {
     async login() {
-      ipcRenderer.send("CONNECT_LCU");
+      ipcRenderer.send("LCU", "connect");
     },
   },
   computed: {
@@ -81,7 +81,7 @@ export default {
     this.$store.dispatch("setStatus");
     this.$store.dispatch("setSummoner");
 
-    ipcRenderer.send("CONNECT_LCU");
+    ipcRenderer.send("LCU", "connect");
 
     ipcRenderer.on("WEBSOCKET", (event, arg) => {
       console.log(arg);
