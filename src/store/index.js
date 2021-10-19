@@ -26,8 +26,9 @@ export default new Vuex.Store({
     setStatus({ commit }) {
       ipcRenderer.on("LCU_STATUS", (event, arg) => {
         commit("getStatus", arg);
-        if (arg.ready) ipcRenderer.send("WEBSOCKET", "connect");
-        else ipcRenderer.send("WEBSOCKET", "disconnect");
+        if (arg.ready) {
+          ipcRenderer.send("LCU", "WEBSOCKET", "connect");
+        } else ipcRenderer.send("LCU", "WEBSOCKET", "disconnect");
       });
     },
     disconnectLCU({ commit }) {

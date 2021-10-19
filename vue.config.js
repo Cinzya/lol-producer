@@ -9,4 +9,7 @@ module.exports = {
       preload: "src/preload.js",
     },
   },
+  devServer: {
+    proxy: "http://localhost:8080",
+  },
 };
