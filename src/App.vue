@@ -1,16 +1,27 @@
 <template>
   <v-app>
-    <v-app-bar app :color="color" dark>
-      <div class="dv-bind-flex align-center">
-        <v-avatar :color="color + ' darken-2'" class="mx-2" size="38">
-          <img
+    <v-app-bar app dark>
+      <div class="d-flex align-center">
+        <v-badge bordered bottom :color="color" dot offset-x="15" offset-y="10">
+          <v-avatar :color="color + ' darken-2'" class="mx-2" size="38">
+            <img
+              v-if="$store.state.connection"
+              :src="$store.getters.avatar"
+              :alt="$store.getters.summoner"
+            />
+            <v-icon v-else dark> mdi-account-circle </v-icon>
+          </v-avatar>
+        </v-badge>
+        <div class="flex-column">
+          <div class="ml-2">{{ $store.getters.summoner }}</div>
+          <div
             v-if="$store.state.connection"
-            :src="$store.getters.avatar"
-            :alt="$store.getters.summoner"
-          />
-          <v-icon v-else dark> mdi-account-circle </v-icon>
-        </v-avatar>
-        <span class="ml-2">{{ $store.getters.summoner }}</span>
+            class="ml-2 text--disabled"
+            style="font-size: 11px !important; line-height: 12px"
+          >
+            {{ $store.state.summoner.region }}
+          </div>
+        </div>
       </div>
 
       <v-spacer></v-spacer>
