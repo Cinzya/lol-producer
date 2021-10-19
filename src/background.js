@@ -176,6 +176,7 @@ ipcMain.on("LCU", (event, method, type, message) => {
       event.reply("LCU_DISCONNECT");
     }
   }
+
   if (method == "WEBSOCKET") {
     const ws = new RiotWSProtocol(
       `wss://${LCU.username}:${LCU.password}@${LCU.address}:${LCU.port}/`
