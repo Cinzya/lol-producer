@@ -8,6 +8,7 @@ export default new Vuex.Store({
   state: {
     summoner: {},
     connection: false,
+    observing: false,
   },
   mutations: {
     getSummoner(state, data) {
@@ -15,6 +16,9 @@ export default new Vuex.Store({
     },
     getStatus(state, data) {
       state.connection = data;
+    },
+    observe(state, data) {
+      state.observing = data;
     },
   },
   actions: {

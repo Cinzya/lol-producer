@@ -1,6 +1,14 @@
 <template>
   <v-col cols="auto">
-    <v-card v-if="observing" elevation="2" class="text-center ml-3" width="190">
+    <v-card
+      v-if="
+        $store.state.observing ||
+        observer.displayName !== $store.state.summoner.displayName
+      "
+      elevation="2"
+      class="text-center ml-3"
+      width="190"
+    >
       <v-card-title>
         <v-avatar rounded size="34" class="mr-4">
           <img :src="avatar" v-if="avatar" />
@@ -38,10 +46,12 @@
         </v-row>
       </v-card-text>
       <v-card-actions class="d-flex justify-center">
+        <!-- TO-DO: Remove Dummy input -->
         <v-btn
-          v-if="observer.displayName !== this.$store.state.summoner.displayName"
-          @click="setTimer(playback.time)"
+          v-if="observer.displayName !== $store.state.summoner.displayName"
+          @click="setTimer({ time: $props.dummytime })"
           text
+          :disabled="!$store.state.observing"
           color="primary"
         >
           Sync
@@ -60,16 +70,22 @@
         v-if="observer.displayName === this.$store.state.summoner.displayName"
         @click="getTimer()"
         text
-        color="deep-purple accent-4"
+        color="primary"
+        class="m-0 p-0"
+        min-height="203px"
+        width="100%"
       >
-        <v-icon>mdi-power</v-icon>
+        <div class="flex-column">
+          <v-icon x-large>mdi-power</v-icon>
+          <p>Start Observing</p>
+        </div>
       </v-btn>
     </v-card>
   </v-col>
 </template>
 <script>
 const { ipcRenderer } = require("electron");
-import { mapState } from "vuex";
+import { mapState, mapActions } from "vuex";
 
 export default {
   name: "observer",
@@ -79,18 +95,27 @@ export default {
   props: ["observer", "avatar", "dummytime"],
   methods: {
     getTimer() {
-      if (!this.observing) {
-        console.log("Get time");
+      if (!this.$store.state.observing) {
         ipcRenderer.on("REPLAY_TIME", (event, arg) => {
           this.playback = arg;
         });
-        // ipcRenderer.send("REPLAY_TIME", this.observing);
-        ipcRenderer.send("LIVE", "GET", "REPLAY_TIME", this.observing);
+        ipcRenderer.send(
+          "LIVE",
+          "GET",
+          "REPLAY_TIME",
+          this.$store.state.observing
+        );
+        this.$store.commit("observe", !this.$store.state.observing);
       } else {
-        // ipcRenderer.send("REPLAY_TIME", this.observing);
-        ipcRenderer.send("LIVE", "GET", "REPLAY_TIME", this.observing);
+        ipcRenderer.send(
+          "LIVE",
+          "GET",
+          "REPLAY_TIME",
+          this.$store.state.observing
+        );
         this.playback = {};
         ipcRenderer.removeListener("REPLAY_TIME");
+        this.$store.commit("observe", !this.$store.state.observing);
       }
     },
     setTimer(t) {
@@ -99,34 +124,23 @@ export default {
   },
   computed: {
     ...mapState(["summoner"]),
+    ...mapActions(["observe"]),
     time() {
-      if (this.$props.dummytime) return this.$props.dummytime;
+      if (this.$props.dummytime)
+        return Math.round(this.$props.dummytime * 10) / 10;
       else {
         if (this.playback.time) {
           // Math.round(this.playback.time * 10) / 10;
           // let minutes = this.playback.time / 60;
           // minutes = Math.floor(minutes);
           // let seconds = this.playback.time % 60;
-          // seconds = Math.round(seconds);
-          // let miliseconds = (this.playback.time % 60) * 10;
-          // miliseconds = Math.round(miliseconds);
-          // return minutes + ":" + seconds + ":" + miliseconds;
+          // seconds = Math.round(seconds * 10) / 10;
+          // return minutes + ":" + seconds;
           return Math.round(this.playback.time * 10) / 10;
         } else {
           return "0";
         }
       }
-    },
-    observing() {
-      if (
-        this.playback &&
-        Object.keys(this.playback).length === 0 &&
-        Object.getPrototypeOf(this.playback) === Object.prototype &&
-        this.$props.observer.displayName ==
-          this.$store.state.summoner.displayName
-      ) {
-        return false;
-      } else return true;
     },
   },
 };
