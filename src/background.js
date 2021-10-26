@@ -1,14 +1,11 @@
 "use strict";
 
-import { app, protocol, BrowserWindow, ipcMain } from "electron";
+import { app, protocol, BrowserWindow } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
 const isDevelopment = process.env.NODE_ENV !== "production";
+const registerIpcListeners = require("./ipcMainListeners");
 // const path = require("path");
-import LCUConnector from "lcu-connector";
-const connector = new LCUConnector();
-const axios = require("axios");
-const RiotWSProtocol = require("./../js/websocket");
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
@@ -73,26 +70,12 @@ app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-var LCU;
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on("ready", async () => {
-  // Grab LCU credentials
-  connector.on("connect", (data) => {
-    //  {
-    //    address: '127.0.0.1'
-    //    port: 18633,
-    //    username: 'riot',
-    //    password: H9y4kOYVkmjWu_5mVIg1qQ,
-    //    protocol: 'https'
-    //  }
-    console.log("Connect with LCU...");
-    LCU = data;
-    console.log(LCU);
-  });
-  // Start listening for the LCU client
-  connector.start();
+  // Register listeners
+  registerIpcListeners();
 
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
@@ -130,133 +113,3 @@ if (isDevelopment) {
     });
   }
 }
-
-// ipc Messages
-// const WebSocket = require("ws");
-
-function token() {
-  return Buffer.from(`${LCU.username}:${LCU.password}`, "utf8").toString(
-    "base64"
-  );
-}
-
-ipcMain.on("LCU", (event, method, type, message) => {
-  async function requestLCU(endpoint) {
-    console.log("[LCU] GET - " + endpoint);
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-
-    try {
-      let response = await axios.get(
-        `${LCU.protocol}://${LCU.address}:${LCU.port}${endpoint}`,
-        {
-          headers: {
-            Authorization: `Basic ${token()}`,
-          },
-        }
-      );
-      return await response.data;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  if (method == "connect") {
-    if (typeof LCU != "undefined" || LCU != null) {
-      (async () => {
-        let connection = await requestLCU("/lol-summoner/v1/status/");
-        let summoner = await requestLCU("/lol-summoner/v1/current-summoner");
-        let region = await requestLCU("/lol-login/v1/login-data-packet");
-        summoner.region = region.platformId;
-
-        event.reply("LCU_STATUS", connection);
-        event.reply("LCU_SUMMONER", summoner);
-      })();
-    } else {
-      console.log("[error] Connection to LCU could not be established");
-      event.reply("LCU_DISCONNECT");
-    }
-  }
-
-  if (method == "WEBSOCKET") {
-    const ws = new RiotWSProtocol(
-      `wss://${LCU.username}:${LCU.password}@${LCU.address}:${LCU.port}/`
-    );
-    ws.on("open", () => {
-      if (type == "connect") {
-        console.log("[LCU] Subscribe to WebSockets");
-        // Subscribe to all LCU events
-        ws.subscribe("OnJsonApiEvent", (rs) => {
-          // Get Lobby information
-          if (rs.uri == "/lol-lobby/v2/lobby") event.reply("WEBSOCKET", rs);
-
-          // Inform about Client Shutdown
-          if (
-            rs.uri == "/process-control/v1/process" &&
-            rs.data.status == "Stopping"
-          ) {
-            console.log("Terminate WebSocket");
-            event.reply("LCU_DISCONNECT");
-            ws.terminate();
-          }
-        });
-      } else if (type == "disconnect") {
-        console.log("[LCU] Close Websocket");
-        ws.close();
-      }
-    });
-  }
-});
-
-ipcMain.on("LIVE", (event, method, type, message) => {
-  async function requestLiveClient(endpoint) {
-    console.log("[Live] GET - " + endpoint);
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-
-    try {
-      let response = await axios.get(`https://127.0.0.1:2999${endpoint}`);
-      return await response.data;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  if (method == "GET") {
-    if (type == "REPLAY_TIME") {
-      let observing = message;
-      if (!observing) {
-        setInterval(async () => {
-          let timer = await requestLiveClient("/replay/playback");
-          event.reply("REPLAY_TIME", timer);
-        }, 100);
-      }
-    }
-  }
-
-  async function sendLiveClient(endpoint, data) {
-    console.log("[Live] POST - " + data + " to " + endpoint);
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-
-    try {
-      let response = await axios.post(
-        `https://127.0.0.1:2999${endpoint}`,
-        data
-      );
-      return await response.data;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  if (method == "POST") {
-    if (type == "ADJUST_TIME") {
-      sendLiveClient("/replay/playback", message);
-    }
-  }
-});
-
-ipcMain.on("LCU_DISCONNECT", (event, arg) => {
-  connector.on("disconnect", (data) => {
-    console.log("LCU disconnected");
-    event.reply("LCU_DISCONNECT");
-  });
-});
