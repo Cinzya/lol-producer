@@ -5,6 +5,7 @@ const LCUConnector = require("lcu-connector");
 const connector = new LCUConnector();
 const axios = require("axios");
 const RiotWSProtocol = require("./../js/websocket");
+const net = require("net");
 var LCU;
 
 module.exports = () => {
@@ -23,6 +24,22 @@ module.exports = () => {
   });
   // Start listening for the LCU client
   connector.start();
+
+  var client = new net.Socket();
+  client.connect(34243, "127.0.0.1", function () {
+    console.log("Connected");
+    //   client.write('Hello, server! Love, Client.');
+  });
+
+  client.on("data", function (data) {
+    console.log("Received: " + data);
+    //   client.destroy(); // kill client after server's response
+  });
+
+  client.on("close", function () {
+    console.log("Connection closed");
+  });
+
   // ipc Messages
   ipcMain.on("LCU", (event, method, type, message) => {
     async function requestLCU(endpoint) {
