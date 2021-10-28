@@ -46,7 +46,7 @@
         </v-row>
       </v-card-text>
       <v-card-actions class="d-flex justify-center">
-        <!-- TO-DO: Remove Dummy input -->
+        <!-- TODO: Remove Dummy input -->
         <v-btn
           v-if="observer.displayName !== $store.state.summoner.displayName"
           @click="setTimer({ time: $props.dummytime })"
@@ -55,6 +55,14 @@
           color="primary"
         >
           Sync
+        </v-btn>
+        <v-btn
+          v-if="observer.displayName == $store.state.summoner.displayName"
+          text
+          @click="stopTimer()"
+          color="error"
+        >
+          Stop
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -117,6 +125,10 @@ export default {
         ipcRenderer.removeListener("REPLAY_TIME");
         this.$store.commit("observe", !this.$store.state.observing);
       }
+    },
+    stopTimer() {
+      this.$store.commit("observe", !this.$store.state.observing);
+      ipcRenderer.send("LIVE", "STOP", "REPLAY_TIME");
     },
     setTimer(t) {
       ipcRenderer.send("LIVE", "POST", "ADJUST_TIME", t);
