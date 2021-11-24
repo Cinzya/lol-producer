@@ -6,7 +6,9 @@ module.exports = {
       contextIsolation: false,
       allowRunningInsecureContent: true,
       webSecurity: false,
-      preload: "src/preload.js",
+      mainProcessFile: 'backend/background.js',
+      rendererProcessFile: 'app/src/main.js',
+      preload: "app/src/preload.js",
     },
   },
   devServer: {

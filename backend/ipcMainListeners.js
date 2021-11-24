@@ -4,27 +4,23 @@ const { ipcMain } = require("electron");
 const LCUConnector = require("lcu-connector");
 const connector = new LCUConnector();
 const axios = require("axios");
-const RiotWSProtocol = require("./../js/websocket");
+const RiotWSProtocol = require("./websocket");
 const net = require("net");
 var LCU;
 
 module.exports = () => {
+
   // Grab LCU credentials
   connector.on("connect", (data) => {
-    //  {
-    //    address: '127.0.0.1'
-    //    port: 18633,
-    //    username: 'riot',
-    //    password: H9y4kOYVkmjWu_5mVIg1qQ,
-    //    protocol: 'https'
-    //  }
     console.info("Connect with LCU...");
     LCU = data;
     console.dir(LCU);
   });
+
   // Start listening for the LCU client
   connector.start();
 
+  // Listen to LiveEvent Socket
   var client = new net.Socket();
   client.connect(34243, "127.0.0.1", function () {
     console.log("Connected");
@@ -40,8 +36,11 @@ module.exports = () => {
     console.log("Connection closed");
   });
 
+
   // ipc Messages
   ipcMain.on("LCU", (event, method, type, message) => {
+
+    //Generic Request to LCU Api
     async function requestLCU(endpoint) {
       console.info("[LCU] GET - " + endpoint);
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
@@ -91,10 +90,15 @@ module.exports = () => {
       ws.on("open", () => {
         if (type == "connect") {
           console.info("[LCU] Subscribed to WebSockets");
+          
           // Subscribe to all LCU events
           ws.subscribe("OnJsonApiEvent", (rs) => {
-            // Get Lobby information
+
+            // Get / filter Lobby information
             if (rs.uri == "/lol-lobby/v2/lobby") event.reply("WEBSOCKET", rs);
+
+            // Get / filter Champ Select information
+            if (rs.uri == "/lol-champ-select-legacy/v1/session") event.reply("CHAMP_SELECT", rs);
 
             // Inform about Client Shutdown
             if (
@@ -115,6 +119,8 @@ module.exports = () => {
   });
 
   ipcMain.on("LIVE", (event, method, type, message) => {
+
+    // Request to Live Game Api
     async function requestLiveClient(endpoint) {
       console.log("[Live] GET - " + endpoint);
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
@@ -139,6 +145,7 @@ module.exports = () => {
       }
     }
 
+    // Send Data to Live Client
     async function sendLiveClient(endpoint, data) {
       console.log("[Live] POST - " + data + " to " + endpoint);
       process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
