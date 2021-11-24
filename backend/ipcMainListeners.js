@@ -3,18 +3,19 @@
 const { ipcMain } = require("electron");
 const LCUConnector = require("lcu-connector");
 const connector = new LCUConnector();
-const axios = require("axios");
 const RiotWSProtocol = require("./websocket");
+const RiotLCU = require("./LCU");
+const RiotLiveClient = require("./LiveClient");
 const net = require("net");
-var LCU;
+var auth;
 
 module.exports = () => {
 
   // Grab LCU credentials
   connector.on("connect", (data) => {
     console.info("Connect with LCU...");
-    LCU = data;
-    console.dir(LCU);
+    auth = data;
+    console.dir(auth);
   });
 
   // Start listening for the LCU client
@@ -40,38 +41,16 @@ module.exports = () => {
   // ipc Messages
   ipcMain.on("LCU", (event, method, type, message) => {
 
-    //Generic Request to LCU Api
-    async function requestLCU(endpoint) {
-      console.info("[LCU] GET - " + endpoint);
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-
-      function token() {
-        return Buffer.from(`${LCU.username}:${LCU.password}`, "utf8").toString(
-          "base64"
-        );
-      }
-
-      try {
-        let response = await axios.get(
-          `${LCU.protocol}://${LCU.address}:${LCU.port}${endpoint}`,
-          {
-            headers: {
-              Authorization: `Basic ${token()}`,
-            },
-          }
-        );
-        return await response.data;
-      } catch (error) {
-        console.error(error);
-      }
+    if (typeof auth != "undefined" || auth != null) {
+      var LCU = new RiotLCU(auth);
     }
-
+    
     if (method == "connect") {
-      if (typeof LCU != "undefined" || LCU != null) {
+      if (typeof auth != "undefined" || auth != null) {
         (async () => {
-          let connection = await requestLCU("/lol-summoner/v1/status/");
-          let summoner = await requestLCU("/lol-summoner/v1/current-summoner");
-          let region = await requestLCU("/lol-login/v1/login-data-packet");
+          let connection = await LCU.request("/lol-summoner/v1/status/");
+          let summoner = await LCU.request("/lol-summoner/v1/current-summoner");
+          let region = await LCU.request("/lol-login/v1/login-data-packet");
           summoner.region = region.platformId;
 
           event.reply("LCU_STATUS", connection);
@@ -85,7 +64,7 @@ module.exports = () => {
 
     if (method == "WEBSOCKET") {
       const ws = new RiotWSProtocol(
-        `wss://${LCU.username}:${LCU.password}@${LCU.address}:${LCU.port}/`
+        `wss://${auth.username}:${auth.password}@${auth.address}:${auth.port}/`
       );
       ws.on("open", () => {
         if (type == "connect") {
@@ -120,51 +99,24 @@ module.exports = () => {
 
   ipcMain.on("LIVE", (event, method, type, message) => {
 
-    // Request to Live Game Api
-    async function requestLiveClient(endpoint) {
-      console.log("[Live] GET - " + endpoint);
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-
-      try {
-        let response = await axios.get(`https://127.0.0.1:2999${endpoint}`);
-        return await response.data;
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
+    const LiveClient = new RiotLiveClient();
+    
     if (method == "GET") {
       if (type == "REPLAY_TIME") {
         let observing = message;
         if (!observing) {
           var REPLAY_TIME = setInterval(async () => {
-            let timer = await requestLiveClient("/replay/playback");
+            let timer = await LiveClient.request("/replay/playback");
             event.reply("REPLAY_TIME", timer);
           }, 100);
         }
       }
     }
 
-    // Send Data to Live Client
-    async function sendLiveClient(endpoint, data) {
-      console.log("[Live] POST - " + data + " to " + endpoint);
-      process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-
-      try {
-        let response = await axios.post(
-          `https://127.0.0.1:2999${endpoint}`,
-          data
-        );
-        return await response.data;
-      } catch (error) {
-        console.log(error);
-      }
-    }
-
     if (method == "POST") {
       if (type == "ADJUST_TIME") {
         console.log(message);
-        sendLiveClient("/replay/playback", message);
+        LiveClient.send("/replay/playback", message);
       }
     }
     if (method == "STOP") {
