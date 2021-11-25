@@ -17,6 +17,11 @@
         </v-row>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col>
+        <v-subheader>Lobby</v-subheader>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 

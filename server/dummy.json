@@ -1,0 +1,140 @@
+{
+    "data": [
+        {
+            "team": "Big Nauti Daddies",
+            "info": "",
+            "abbreviation": "BND",
+            "player": [
+                {
+                    "name": "TheLegendOfLulu",
+                    "pick": [
+                        {
+                            "champion": "Zett",
+                            "image": {
+                                "full": "Zett.png",
+                                "sprite": "champion3.png"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "keelrylreyn",
+                    "pick": [
+                        {
+                            "champion": "Nidalee",
+                            "image": {
+                                "full": "Nidalee.png",
+                                "sprite": "champion3.png"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "ban": [
+                {
+                    "champion": "Quinn",
+                    "image": {
+                        "full": "Quinn.png",
+                        "sprite": "champion3.png"
+                    }
+                },
+                {
+                    "champion": "Teemo",
+                    "image": {
+                        "full": "Teemo.png",
+                        "sprite": "champion4.png"
+                    }
+                },
+                {
+                    "champion": "Yasuo",
+                    "image": {
+                        "full": "Yasuo.png",
+                        "sprite": "champion4.png"
+                    }
+                },
+                {
+                    "champion": "Yone",
+                    "image": {
+                        "full": "Yone.png",
+                        "sprite": "champion4.png"
+                    }
+                },
+                {
+                    "champion": "Vladimir",
+                    "image": {
+                        "full": "Vladimir.png",
+                        "sprite": "champion4.png"
+                    }
+                }
+            ]
+        },
+        {
+            "team": "Zhonyas hourglass figure",
+            "info": "",
+            "abbreviation": "ZFH",
+            "player": [
+                {
+                    "name": "BDJ",
+                    "pick": [
+                        {
+                            "champion": "Ornn",
+                            "image": {
+                                "full": "Ornn.png",
+                                "sprite": "champion3.png"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "LaneLocal",
+                    "pick": [
+                        {
+                            "champion": "Poppy",
+                            "image": {
+                                "full": "Poppy.png",
+                                "sprite": "champion3.png"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "ban": [
+                {
+                    "champion": "Sivir",
+                    "image": {
+                        "full": "Sivir.png",
+                        "sprite": "champion3.png"
+                    }
+                },
+                {
+                    "champion": "Thresh",
+                    "image": {
+                        "full": "Thresh.png",
+                        "sprite": "champion4.png"
+                    }
+                },
+                {
+                    "champion": "Xin Zhao",
+                    "image": {
+                        "full": "XinZhao.png",
+                        "sprite": "champion4.png"
+                    }
+                },
+                {
+                    "champion": "Gnar",
+                    "image": {
+                        "full": "Gnar.png",
+                        "sprite": "champion1.png"
+                    }
+                },
+                {
+                    "champion": "Viktor",
+                    "image": {
+                        "full": "Viktor.png",
+                        "sprite": "champion4.png"
+                    }
+                }
+            ]
+        }
+    ]
+}
