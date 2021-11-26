@@ -1,13 +1,14 @@
-# LoL Producer [![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
+# LoL Producer
 
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 Lol Producer is a tool to retrieve data and interact with the League of Legends Client for broadcast purposes, specifically targeted towards **producers** working with **vMix Titles** and **observers** working with multiple observers alongside them.
 
 - Draw champ select data over local JSON endpoints formated vMix friendly (wip)
 - Allow observers to sync their time to each other (wip)
 
-
 ## Project setup
+
 Please note that this project is still at an early stage and not all of the mentioned features above are functioning at this very moment.
 
 ```
