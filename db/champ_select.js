@@ -1,6 +1,4 @@
 const knex = require("./knex");
-const cdragon = require("./../helpers");
-const cd = new cdragon();
 
 function getPlayers() {
   return knex
@@ -9,12 +7,9 @@ function getPlayers() {
       "picks.splashart_original",
       "picks.splashart_centered",
       "picks.tile",
-      "picks.portrait",
-      "roles.name as role",
-      "roles.icon"
+      "picks.portrait"
     )
     .from("players")
-    .leftJoin("roles", "roles.id", "players.role")
     .leftJoin("picks", "players.id", "picks.player");
 }
 
@@ -28,10 +23,8 @@ function getBans() {
   );
 }
 
-async function updatePlayer(id, name) {
-  return knex("players").where("id", id).update({
-    name,
-  });
+async function updatePlayer(id, data) {
+  return knex("players").where("id", id).update(data);
 }
 
 async function updateBan(id, data) {
