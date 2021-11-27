@@ -6,11 +6,13 @@ const connector = new LCUConnector();
 const RiotWSProtocol = require("./websocket");
 const RiotLCU = require("./LCU");
 const RiotLiveClient = require("./LiveClient");
+const LiveClient = new RiotLiveClient();
+const LocalServer = require("./LocalServer");
+const Server = new LocalServer();
 const net = require("net");
 var auth;
 
 module.exports = () => {
-
   // Grab LCU credentials
   connector.on("connect", (data) => {
     console.info("Connect with LCU...");
@@ -37,21 +39,19 @@ module.exports = () => {
     console.log("Connection closed");
   });
 
-
   // ipc Messages
   ipcMain.on("LCU", (event, method, type, message) => {
-
     if (typeof auth != "undefined" || auth != null) {
       var LCU = new RiotLCU(auth);
     }
-    
+
     if (method == "connect") {
       if (typeof auth != "undefined" || auth != null) {
         (async () => {
-          let connection = await LCU.request("/lol-summoner/v1/status/");
-          let summoner = await LCU.request("/lol-summoner/v1/current-summoner");
-          let region = await LCU.request("/lol-login/v1/login-data-packet");
-          summoner.region = region.platformId;
+          let connection = await LCU.get("/lol-summoner/v1/status/");
+          let summoner = await LCU.get("/lol-summoner/v1/current-summoner");
+          let region = await LCU.get("/lol-login/v1/login-data-packet");
+          summoner.region = region.competitiveRegion;
 
           event.reply("LCU_STATUS", connection);
           event.reply("LCU_SUMMONER", summoner);
@@ -69,15 +69,43 @@ module.exports = () => {
       ws.on("open", () => {
         if (type == "connect") {
           console.info("[LCU] Subscribed to WebSockets");
-          
+
           // Subscribe to all LCU events
           ws.subscribe("OnJsonApiEvent", (rs) => {
-
             // Get / filter Lobby information
             if (rs.uri == "/lol-lobby/v2/lobby") event.reply("WEBSOCKET", rs);
 
             // Get / filter Champ Select information
-            if (rs.uri == "/lol-champ-select-legacy/v1/session") event.reply("CHAMP_SELECT", rs);
+            if (rs.uri == "/lol-champ-select-legacy/v1/session") {
+              rs.data.action.forEach((element) => {
+                element = element[0];
+                if (element.type === "ban") {
+                  Server.send(`/champselect/ban/${element.pickTurn}`, {
+                    championKey: element.championId
+                  });
+                }
+              });
+              rs.data.myTeam.forEach((element) => {
+                let summoner = await LCU.get(
+                  `/lol-summoner/v1/summoners/${element.summonerId}`
+                ).displayName;
+                Server.send(`/champselect/player/${element.cellId + 1}`, {
+                  player: summoner,
+                  spell1: element.spell1Id,
+                  spell2: element.spell2Id
+                });
+              });
+              rs.data.theirTeam.forEach((element) => {
+                let summoner = await LCU.get(
+                  `/lol-summoner/v1/summoners/${element.summonerId}`
+                ).displayName;
+                Server.send(`/champselect/player/${element.cellId + 1}`, {
+                  player: summoner,
+                  spell1: element.spell1Id,
+                  spell2: element.spell2Id
+                });
+              });
+            }
 
             // Inform about Client Shutdown
             if (
@@ -98,9 +126,6 @@ module.exports = () => {
   });
 
   ipcMain.on("LIVE", (event, method, type, message) => {
-
-    const LiveClient = new RiotLiveClient();
-    
     if (method == "GET") {
       if (type == "REPLAY_TIME") {
         let observing = message;
