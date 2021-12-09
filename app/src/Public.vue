@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar v-if="$store.state.connection" app dark>
+    <v-app-bar app dark>
       <div class="d-flex align-center">
         <v-badge bordered bottom :color="color" dot offset-x="15" offset-y="10">
           <v-avatar :color="color + ' darken-2'" class="mx-2" size="38">
@@ -25,9 +25,9 @@
       </div>
 
       <v-spacer></v-spacer>
-      <!-- <v-btn icon>
+      <v-btn icon>
         <v-icon @click="login()"> mdi-power </v-icon>
-      </v-btn> -->
+      </v-btn>
     </v-app-bar>
 
     <v-main id="main">
@@ -68,27 +68,15 @@ export default {
   data: () => ({
     loading: false,
   }),
-  methods: {
-    async login() {
-      ipcRenderer.send("LCU", "connect");
-    },
-  },
+  methods: {},
   computed: {
     ...mapGetters(["summoner", "avatar", "color"]),
     ...mapState(["connection"]),
   },
   created() {
-    this.$store.dispatch("setStatus");
-    this.$store.dispatch("setSummoner");
-
-    ipcRenderer.send("LCU", "connect");
-
-    ipcRenderer.on("WEBSOCKET", (event, arg) => {
-      console.log(arg);
-    });
-
     ipcRenderer.on("LCU_DISCONNECT", () => {
       this.$store.dispatch("disconnectLCU");
+      this.$router.push("Connect");
     });
   },
 };

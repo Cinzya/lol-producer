@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
 const { ipcRenderer } = require("electron");
+import router from "./../router/index";
 
 Vue.use(Vuex);
 
@@ -31,8 +32,12 @@ export default new Vuex.Store({
       ipcRenderer.on("LCU_STATUS", (event, arg) => {
         commit("getStatus", arg);
         if (arg.ready) {
+          router.push("/home");
           ipcRenderer.send("LCU", "WEBSOCKET", "connect");
-        } else ipcRenderer.send("LCU", "WEBSOCKET", "disconnect");
+        } else {
+          router.push("/connect");
+          ipcRenderer.send("LCU", "WEBSOCKET", "disconnect");
+        }
       });
     },
     disconnectLCU({ commit }) {

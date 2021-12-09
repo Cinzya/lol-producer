@@ -1,15 +1,23 @@
 <template>
-  <hello-world />
+  <v-container>
+    <observers />
+    <v-row>
+      <v-col>
+        <v-subheader>Lobby</v-subheader>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
-import HelloWorld from "../components/HelloWorld";
+import Observers from "../components/Observers.vue";
 
 export default {
+  components: { Observers },
   name: "Home",
-
-  components: {
-    HelloWorld,
-  },
+  data: () => ({}),
+  methods: {},
+  computed: {},
+  mounted() {},
 };
 </script>

@@ -27,6 +27,12 @@ npm run electron:serve
 npm run electron:build
 ```
 
+### Boot Server
+
+```
+npm run server
+```
+
 ### Lints and fixes files
 
 ```

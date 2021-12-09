@@ -1,10 +1,7 @@
 <template>
   <v-col cols="auto">
     <v-card
-      v-if="
-        $store.state.observing ||
-        observer.displayName !== $store.state.summoner.displayName
-      "
+      v-if="$store.state.observing"
       elevation="2"
       class="text-center ml-3"
       width="190"
@@ -12,12 +9,8 @@
       <v-card-title>
         <v-avatar rounded size="34" class="mr-4">
           <img :src="avatar" v-if="avatar" />
-          <img
-            src="https://ddragon.canisback.com/10.1.1/img/profileicon/29.png"
-            v-else
-          />
         </v-avatar>
-        {{ observer.displayName }}</v-card-title
+        {{ $store.state.displayName }}</v-card-title
       >
       <v-card-text>
         <p class="text-subtitle-1 my-0">{{ time }}</p>
@@ -34,10 +27,7 @@
           </v-col>
 
           <v-col cols="auto">
-            <span v-if="playback.speed == 8">x8</span>
-            <span v-else-if="playback.speed == 4">x4</span>
-            <span v-else-if="playback.speed == 2">x2</span>
-            <span v-else>x1</span>
+            <span>x{{ playback.speed }}</span>
           </v-col>
 
           <v-col cols="auto">
@@ -46,24 +36,7 @@
         </v-row>
       </v-card-text>
       <v-card-actions class="d-flex justify-center">
-        <!-- TODO: Remove Dummy input -->
-        <v-btn
-          v-if="observer.displayName !== $store.state.summoner.displayName"
-          @click="setTimer({ time: $props.dummytime })"
-          text
-          :disabled="!$store.state.observing"
-          color="primary"
-        >
-          Sync
-        </v-btn>
-        <v-btn
-          v-if="observer.displayName == $store.state.summoner.displayName"
-          text
-          @click="stopTimer()"
-          color="error"
-        >
-          Stop
-        </v-btn>
+        <v-btn text @click="stopTimer()" color="error"> Stop </v-btn>
       </v-card-actions>
     </v-card>
 
@@ -75,7 +48,6 @@
       color="#385F73"
     >
       <v-btn
-        v-if="observer.displayName === this.$store.state.summoner.displayName"
         @click="getTimer()"
         text
         color="primary"
@@ -129,9 +101,6 @@ export default {
     stopTimer() {
       this.$store.commit("observe", !this.$store.state.observing);
       ipcRenderer.send("LIVE", "STOP", "REPLAY_TIME");
-    },
-    setTimer(t) {
-      ipcRenderer.send("LIVE", "POST", "ADJUST_TIME", t);
     },
   },
   computed: {
